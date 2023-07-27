@@ -1,7 +1,5 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import clientPromise from "@/lib/mongodb"
+import { mongooseConnect } from "@/lib/mongoose"
 import { Product } from "@/models/Product"
-import mongoose from "mongoose"
 import type { NextApiRequest, NextApiResponse } from "next"
 
 export default async function handler(
@@ -9,7 +7,16 @@ export default async function handler(
 	res: NextApiResponse<any>
 ) {
 	const { method } = req
-	mongoose.Promise = clientPromise
+	await mongooseConnect()
+
+	if (method == "GET") {
+		if (req.query.id) {
+			res.json(await Product.findById(req.query.id))
+		} else {
+			res.json(await Product.find())
+		}
+	}
+
 	if (method == "POST") {
 		const { title, description, price } = req.body
 		const productDoc = await Product.create({
