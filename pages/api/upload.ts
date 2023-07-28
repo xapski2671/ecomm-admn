@@ -1,10 +1,8 @@
-import { mongooseConnect } from "@/lib/mongoose"
-import { Product } from "@/models/Product"
-import type { NextApiRequest, NextApiResponse } from "next"
-import multiparty from "multiparty"
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import fs from "fs"
 import mime from "mime-types"
+import multiparty from "multiparty"
+import type { NextApiRequest, NextApiResponse } from "next"
 
 const bucketName = "xps-ecomm"
 
@@ -14,7 +12,6 @@ export default async function handler(
 ) {
 	const form = new multiparty.Form()
 	form.parse(req, async (err, fields, files) => {
-		console.log(files)
 		const client = new S3Client({
 			region: "eu-north-1",
 			credentials: {

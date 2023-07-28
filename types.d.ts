@@ -6,4 +6,12 @@ export interface product {
 	description: string
 	price: number
 	__v: number
+	images: string[]
+}
+
+export interface category {
+	_id: ObjectId
+	name: String
+	parent?: category
+	__v: string
 }

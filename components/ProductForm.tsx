@@ -3,6 +3,7 @@ import axios from "axios"
 import { ObjectId } from "mongoose"
 import { useRouter } from "next/router"
 import { useState } from "react"
+import Spinner from "./Spinner"
 
 interface props {
 	_id?: ObjectId
@@ -10,6 +11,12 @@ interface props {
 	description?: string
 	price?: number
 	__v?: number
+	images?: string[]
+}
+
+interface sortableItem {
+	id: string
+	name: string
 }
 
 export default function ProductForm(productInfo?: props) {
@@ -19,10 +26,11 @@ export default function ProductForm(productInfo?: props) {
 	const [description, setDescription] = useState(productInfo?.description || "")
 	const [price, setPrice] = useState(productInfo?.price || "")
 	const [goToProducts, setGoToProducts] = useState(false)
-	const [Images, setImages] = useState()
+	const [images, setImages] = useState(productInfo?.images || [])
+	const [isUploading, setIsUploading] = useState(false)
 
 	async function saveProduct() {
-		const data = { title, description, price }
+		const data = { title, description, price, images }
 		if (productInfo?._id) {
 			await axios.put("/api/products", { _id: productInfo._id, ...data })
 		} else {
@@ -37,11 +45,14 @@ export default function ProductForm(productInfo?: props) {
 
 	async function uploadImages(imgs: any) {
 		if (imgs) {
+			setIsUploading(true)
 			const data = new FormData()
 			for (const img of imgs) {
 				data.append("img", img)
 			}
 			const res = await axios.post("/api/upload", data)
+			setImages((prev) => [...prev, ...res.data.links])
+			setIsUploading(false)
 		}
 	}
 
@@ -61,7 +72,20 @@ export default function ProductForm(productInfo?: props) {
 				onChange={(e) => setTitle(e.target.value)}
 			/>
 			<label>{"Photos"}</label>
-			<div className="mb-2">
+			<div className="mb-2 flex flex-wrap gap-2">
+				{images.length > 0 &&
+					images.map((link, index) => {
+						return (
+							<div key={index} className="h-24">
+								<img src={link} alt="product-img" className="rounded-lg" />
+							</div>
+						)
+					})}
+				{isUploading && (
+					<div className="h-24 p-1 flex items-center">
+						<Spinner />
+					</div>
+				)}
 				<label
 					className="w-24 h-24 border text-center flex 
 					items-center justify-center text-sm gap-1 text-gray-500 
@@ -90,7 +114,6 @@ export default function ProductForm(productInfo?: props) {
 						}}
 					/>
 				</label>
-				<div>{"No photos in this product"}</div>
 			</div>
 			<label>{"Description"}</label>
 			<textarea
