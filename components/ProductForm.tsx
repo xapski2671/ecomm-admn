@@ -2,7 +2,7 @@ import { product } from "@/types"
 import axios from "axios"
 import { ObjectId } from "mongoose"
 import { useRouter } from "next/router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Spinner from "./Spinner"
 
 interface props {
@@ -12,6 +12,7 @@ interface props {
 	price?: number
 	__v?: number
 	images?: string[]
+	category?: ObjectId
 }
 
 interface sortableItem {
@@ -28,9 +29,13 @@ export default function ProductForm(productInfo?: props) {
 	const [goToProducts, setGoToProducts] = useState(false)
 	const [images, setImages] = useState(productInfo?.images || [])
 	const [isUploading, setIsUploading] = useState(false)
+	const [categories, setCategories] = useState([])
+	const [category, setCategory] = useState(
+		productInfo?.category?.toString() || ""
+	)
 
 	async function saveProduct() {
-		const data = { title, description, price, images }
+		const data = { title, description, price, images, category }
 		if (productInfo?._id) {
 			await axios.put("/api/products", { _id: productInfo._id, ...data })
 		} else {
@@ -56,6 +61,10 @@ export default function ProductForm(productInfo?: props) {
 		}
 	}
 
+	useEffect(() => {
+		axios.get("/api/categories").then((res) => setCategories(res.data))
+	}, [])
+
 	return (
 		<form
 			className="flex flex-col gap-2"
@@ -71,6 +80,18 @@ export default function ProductForm(productInfo?: props) {
 				value={title}
 				onChange={(e) => setTitle(e.target.value)}
 			/>
+			<label>{"Category"}</label>
+			<select value={category} onChange={(e) => setCategory(e.target.value)}>
+				<option value="">{"Uncategorized"}</option>
+				{categories.length > 0 &&
+					categories.map((c: any, index) => {
+						return (
+							<option value={c._id} key={index}>
+								{c.name}
+							</option>
+						)
+					})}
+			</select>
 			<label>{"Photos"}</label>
 			<div className="mb-2 flex flex-wrap gap-2">
 				{images.length > 0 &&
@@ -121,7 +142,7 @@ export default function ProductForm(productInfo?: props) {
 				value={description}
 				onChange={(e) => setDescription(e.target.value)}
 			/>
-			<label>{"Price(in USD)"}</label>
+			<label>{"Price (in USD)"}</label>
 			<input
 				type="number"
 				placeholder="price"
