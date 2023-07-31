@@ -1,4 +1,4 @@
-import { product } from "@/types"
+import { product, property } from "@/types"
 import axios from "axios"
 import { ObjectId } from "mongoose"
 import { useRouter } from "next/router"
@@ -13,6 +13,7 @@ interface props {
 	__v?: number
 	images?: string[]
 	category?: ObjectId
+	properties?: Object
 }
 
 interface sortableItem {
@@ -30,12 +31,22 @@ export default function ProductForm(productInfo?: props) {
 	const [images, setImages] = useState(productInfo?.images || [])
 	const [isUploading, setIsUploading] = useState(false)
 	const [categories, setCategories] = useState([])
-	const [category, setCategory] = useState(
+	const [category, setCategory] = useState<any>(
 		productInfo?.category?.toString() || ""
+	)
+	const [productProperties, setProductProperties] = useState<any>(
+		productInfo?.properties || {}
 	)
 
 	async function saveProduct() {
-		const data = { title, description, price, images, category }
+		const data = {
+			title,
+			description,
+			price,
+			images,
+			category,
+			properties: productProperties,
+		}
 		if (productInfo?._id) {
 			await axios.put("/api/products", { _id: productInfo._id, ...data })
 		} else {
@@ -59,6 +70,27 @@ export default function ProductForm(productInfo?: props) {
 			setImages((prev) => [...prev, ...res.data.links])
 			setIsUploading(false)
 		}
+	}
+
+	const propertiesToFill = []
+	if (categories.length > 0 && category) {
+		let catInfo: any = categories.find(({ _id }) => _id === category)
+		propertiesToFill.push(...catInfo?.properties)
+		while (catInfo?.parent?._id) {
+			const parentCat: any = categories.find(
+				({ _id }) => _id === catInfo?.parent?._id
+			)
+			propertiesToFill.push(...parentCat.properties)
+			catInfo = parentCat
+		}
+	}
+
+	function setProductProp(propName: string, value: string) {
+		setProductProperties((prev: any) => {
+			const newProductProps = { ...prev }
+			newProductProps[propName] = value
+			return newProductProps
+		})
 	}
 
 	useEffect(() => {
@@ -92,6 +124,28 @@ export default function ProductForm(productInfo?: props) {
 						)
 					})}
 			</select>
+			{propertiesToFill.length > 0 &&
+				propertiesToFill.map((p: any, index) => {
+					return (
+						<div key={index} className="flex gap-1">
+							<div>{p.name}</div>
+							<select
+								value={productProperties[p.name]}
+								onChange={(e) => {
+									setProductProp(p.name, e.target.value)
+								}}
+							>
+								{p.values.map((v: any, index: number) => {
+									return (
+										<option value={v} key={index}>
+											{v}
+										</option>
+									)
+								})}
+							</select>
+						</div>
+					)
+				})}
 			<label>{"Photos"}</label>
 			<div className="mb-2 flex flex-wrap gap-2">
 				{images.length > 0 &&

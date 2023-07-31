@@ -2,6 +2,7 @@ import { mongooseConnect } from "@/lib/mongoose"
 import { Category } from "@/models/Category"
 import { Product } from "@/models/Product"
 import type { NextApiRequest, NextApiResponse } from "next"
+import { isAdmin } from "./auth/[...nextauth]"
 
 export default async function handler(
 	req: NextApiRequest,
@@ -9,6 +10,7 @@ export default async function handler(
 ) {
 	const { method } = req
 	await mongooseConnect()
+	await isAdmin(req, res)
 
 	if (method === "GET") {
 		res.json(await Category.find().populate("parent"))

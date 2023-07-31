@@ -1,6 +1,8 @@
 import { mongooseConnect } from "@/lib/mongoose"
 import { Product } from "@/models/Product"
 import type { NextApiRequest, NextApiResponse } from "next"
+import { getServerSession } from "next-auth"
+import authOptions, { isAdmin } from "@/pages/api/auth/[...nextauth]"
 
 export default async function handler(
 	req: NextApiRequest,
@@ -8,6 +10,7 @@ export default async function handler(
 ) {
 	const { method } = req
 	await mongooseConnect()
+	await isAdmin(req, res)
 
 	if (method == "GET") {
 		if (req.query.id) {
@@ -18,22 +21,24 @@ export default async function handler(
 	}
 
 	if (method == "POST") {
-		const { title, description, price, images, category } = req.body
+		const { title, description, price, images, category, properties } = req.body
 		const productDoc = await Product.create({
 			title,
 			description,
 			price,
 			images,
 			category,
+			properties,
 		})
 		res.json(productDoc)
 	}
 
 	if (method == "PUT") {
-		const { title, description, price, _id, images, category } = req.body
+		const { title, description, price, _id, images, category, properties } =
+			req.body
 		await Product.updateOne(
 			{ _id },
-			{ title, description, price, images, category }
+			{ title, description, price, images, category, properties }
 		)
 		res.json(true)
 	}

@@ -3,6 +3,8 @@ import fs from "fs"
 import mime from "mime-types"
 import multiparty from "multiparty"
 import type { NextApiRequest, NextApiResponse } from "next"
+import { isAdmin } from "./auth/[...nextauth]"
+import { mongooseConnect } from "@/lib/mongoose"
 
 const bucketName = "xps-ecomm"
 
@@ -10,6 +12,8 @@ export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse<any>
 ) {
+	await mongooseConnect()
+	await isAdmin(req, res)
 	const form = new multiparty.Form()
 	form.parse(req, async (err, fields, files) => {
 		const client = new S3Client({

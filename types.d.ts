@@ -8,6 +8,7 @@ export interface product {
 	__v: number
 	images?: string[]
 	category?: ObjectId
+	properties?: Object
 }
 
 export interface category {

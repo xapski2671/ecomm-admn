@@ -31,6 +31,7 @@ export default function EditProductPage() {
 					__v={productInfo.__v}
 					images={productInfo.images}
 					category={productInfo?.category}
+					properties={productInfo?.properties}
 				/>
 			)}
 		</Layout>
